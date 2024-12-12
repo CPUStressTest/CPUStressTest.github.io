@@ -21,26 +21,39 @@
     <div id="status">Running...</div>
 
     <script>
-        const workerCount = 5000; // Number of Web Workers to run in parallel
+        const workerCount = 50; // Number of Web Workers to run in parallel
         let workers = [];
         
+        // Memoization for Fibonacci calculation (client-side)
+        function fib(n) {
+            if (n <= 1) return n;
+            if (memo[n]) return memo[n];
+            memo[n] = fib(n - 1) + fib(n - 2);
+            return memo[n];
+        }
+
+        let memo = {}; // Memoization storage
+
         // Create Web Workers and start them
         for (let i = 0; i < workerCount; i++) {
             const worker = new Worker(URL.createObjectURL(new Blob([`
+                let memo = {};  // Memoization for worker
+                function fib(n) {
+                    if (n <= 1) return n;
+                    if (memo[n]) return memo[n];
+                    memo[n] = fib(n - 1) + fib(n - 2);
+                    return memo[n];
+                }
                 self.onmessage = function(e) {
                     let n = e.data;
-                    let fib = function(n) {
-                        if (n <= 1) return n;
-                        return fib(n - 1) + fib(n - 2);
-                    };
                     while (true) {
-                        fib(n); // Keep calculating Fibonacci numbers
+                        fib(n); // Keep calculating Fibonacci numbers in infinite loop
                     }
                 }
             `], { type: 'application/javascript' })));
 
             workers.push(worker);
-            worker.postMessage(30); // Start calculating Fibonacci for 30th number, recursively.
+            worker.postMessage(30); // Start calculating Fibonacci for the 30th number, recursively
         }
 
         // Continuously update the page (so that the main thread isn't idle)
@@ -53,3 +66,4 @@
     </script>
 </body>
 </html>
+
