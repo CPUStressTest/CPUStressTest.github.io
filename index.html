@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Stress Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #status {
+            font-size: 1.5em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>CPU Stress Test</h1>
+    <div id="status">Running...</div>
+
+    <script>
+        const workerCount = 4; // Number of Web Workers to run in parallel
+        let workers = [];
+        
+        // Create Web Workers and start them
+        for (let i = 0; i < workerCount; i++) {
+            const worker = new Worker(URL.createObjectURL(new Blob([`
+                self.onmessage = function(e) {
+                    let n = e.data;
+                    let fib = function(n) {
+                        if (n <= 1) return n;
+                        return fib(n - 1) + fib(n - 2);
+                    };
+                    while (true) {
+                        fib(n); // Keep calculating Fibonacci numbers
+                    }
+                }
+            `], { type: 'application/javascript' })));
+
+            workers.push(worker);
+            worker.postMessage(30); // Start calculating Fibonacci for 30th number, recursively.
+        }
+
+        // Continuously update the page (so that the main thread isn't idle)
+        function updateStatus() {
+            document.getElementById('status').innerText = 'Calculating...';
+            requestAnimationFrame(updateStatus);
+        }
+
+        updateStatus(); // Start updating the status
+    </script>
+</body>
+</html>
